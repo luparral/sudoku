@@ -2,8 +2,6 @@ import java.util.Random;
 
 public class Sudoku {
 
-
-
     private int dim;
     private final int low = 1;
     private final int high = 9;

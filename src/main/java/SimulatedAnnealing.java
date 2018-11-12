@@ -11,7 +11,7 @@ public class SimulatedAnnealing {
 
     public static void main(String[] args) {
         // TODO: Create initial Sudoku
-        Sudoku current = new Sudoku(3);
+        Sudoku current = new Sudoku(5, 5);
         // TODO: Initialize initial Sudoku
         // System.out.println("Initial sudoku repetitions: " + current.repetitions());
         Sudoku best = current;

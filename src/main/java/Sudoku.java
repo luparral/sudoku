@@ -17,7 +17,6 @@ public final class Sudoku {
     private final int boardSize;
     private final int[][] board;
     private final boolean[][] boardFixedPositions;
-    private final int fixedQuantity;
 
     /**
      * Creates a Sudoku in which its squares have a size of {@code squareSize} and the board a size of
@@ -35,10 +34,16 @@ public final class Sudoku {
         boardSize = squareSize * squareSize;
         board = new int[boardSize][boardSize];
         boardFixedPositions = new boolean[boardSize][boardSize];
-        this.fixedQuantity = fixedQuantity;
 
         fillBoard();
-        fillFixedPositions();
+        fillFixedPositions(fixedQuantity);
+    }
+
+    private Sudoku(int[][] board, boolean[][] boardFixedPositions) {
+        this.boardSize = board.length;
+        this.squareSize = (int) Math.sqrt(boardSize);
+        this.board = board;
+        this.boardFixedPositions =  boardFixedPositions;
     }
 
     private void fillBoard() {
@@ -47,7 +52,7 @@ public final class Sudoku {
         }
     }
 
-    private void fillFixedPositions() {
+    private void fillFixedPositions(int fixedQuantity) {
         List<Pair<Integer, Integer>> possiblePositions = new ArrayList<>();
 
         for (int i = 0; i < boardSize; i++) {
@@ -143,12 +148,51 @@ public final class Sudoku {
         }
     }
 
+    // TODO: Comment
+    public Sudoku randomSwap() {
+        Random random = new Random();
+
+        int x1, y1, x2, y2;
+        boolean validSwap;
+
+        do {
+            x1 = random.nextInt(boardSize);
+            y1 = random.nextInt(boardSize);
+            x2 = random.nextInt(boardSize);
+            y2 = random.nextInt(boardSize);
+
+            validSwap = (x1 != x2 || y1 != y2) && !boardFixedPositions[x1][y1] && !boardFixedPositions[x2][y2];
+        } while (!validSwap);
+
+        // Copy board data
+        int[][] swappedBoard = new int[boardSize][boardSize];
+        boolean fixedBoardPositionsCopy[][] = new boolean[boardSize][boardSize];
+
+        for (int i = 0; i < boardSize; i++) {
+            System.arraycopy(board[i], 0, swappedBoard[i], 0, boardSize);
+        }
+
+        for (int i = 0; i < boardSize; i++) {
+            System.arraycopy(boardFixedPositions[i], 0, fixedBoardPositionsCopy[i], 0, boardSize);
+        }
+
+        // Swap values
+        int buffer = swappedBoard[x1][y1];
+        swappedBoard[x1][y1] = swappedBoard[x2][y2];
+        swappedBoard[x2][y2] = buffer;
+
+        return new Sudoku(swappedBoard, fixedBoardPositionsCopy);
+    }
+
     public static void main(String[] args) {
         int dim = 3;
         int fixedQuantity = 9;
         Sudoku sudoku = new Sudoku(dim, fixedQuantity);
         sudoku.show();
         System.out.println("#Duplicates = " + sudoku.repetitions());
+        Sudoku neighbor = sudoku.randomSwap();
+        neighbor.show();
+        System.out.println("#Duplicates = " + neighbor.repetitions());
     }
 
 }

@@ -1,51 +1,50 @@
 public class SimulatedAnnealing {
 
-    private static double acceptanceProbability(int energy, int newEnergy, double temperature) {
-        // If the new solution is better, accept it
-        if (newEnergy < energy) {
-            return 1.0;
-        }
-        // If the new solution is worse, calculate an acceptance probability
-        return Math.exp((energy - newEnergy) / temperature);
-    }
-
     public static void main(String[] args) {
-        // TODO: Create initial Sudoku
+        // Initialize system
         Sudoku current = new Sudoku(3, 9);
-        // TODO: Initialize initial Sudoku
-        // System.out.println("Initial sudoku repetitions: " + current.repetitions());
+        int currentEnergy = current.repetitions();
+        System.out.println("Initial sudoku repetitions: " + currentEnergy);
         Sudoku best = current;
+        int bestEnergy = currentEnergy;
 
-        double temp = 10000.0;
-
+        double temperature = 10000.0;
         double coolingRate = 0.003;
 
         // Loop until system has cooled
-        while (temp > 1.0) {
-            // TODO: Create neighbor solution
-            //Sudoku neighbor = null;
-
-            // TODO: Get real energy of solutions
-            //int currentEnergy = 0;
-            //int neighbourEnergy = 0;
+        while (temperature > 1.0) {
+            Sudoku neighbor = current.randomSwap();
+            int neighbourEnergy = neighbor.repetitions();
 
             // Decide if we should accept the neighbour
-            //if (acceptanceProbability(currentEnergy, neighbourEnergy, temp) > Math.random()) {
-            //    current = new Sudoku(neighbor);
-            //}
+            if (acceptanceProbability(currentEnergy, neighbourEnergy, temperature) > Math.random()) {
+                current = neighbor;
+                currentEnergy = neighbourEnergy;
 
-            // Keep track of the best solution found
-            //if (current.repetitions() < best.repetitions()) {
-            //    best = new Sudoku(current);
-            //    System.out.println("New best sudoku repetitions: " + best.repetitions());
-            //}
+                // Keep track of the best solution found
+                if (currentEnergy < bestEnergy) {
+                    best = current;
+                    bestEnergy = currentEnergy;
+                    System.out.println("New best sudoku repetitions: " + bestEnergy);
+                }
+            }
 
             // Cool system
-            temp *= 1 - coolingRate;
+            temperature *= 1 - coolingRate;
         }
 
-        // System.out.println("Final solution repetitions: " + best.repetitions());
-        System.out.println("Final Sudoku: " + best);
+        System.out.println("Final Sudoku");
+        best.show();
+        System.out.println("Final Sudoku #repetitions: " + bestEnergy);
+    }
+
+    private static double acceptanceProbability(int currentEnergy, int neighborEnergy, double temperature) {
+        // If the new solution is better, accept it
+        if (neighborEnergy < currentEnergy) {
+            return 1.0;
+        }
+        // If the new solution is worse, calculate an acceptance probability
+        return Math.exp((currentEnergy - neighborEnergy) / temperature);
     }
     
 }

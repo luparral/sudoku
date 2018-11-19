@@ -148,7 +148,9 @@ public final class Sudoku {
         }
     }
 
-    // TODO: Comment
+    /**
+     * @return a new {@link Sudoku} instance with 2 non-fixed elements swapped
+     */
     public Sudoku randomSwap() {
         Random random = new Random();
 

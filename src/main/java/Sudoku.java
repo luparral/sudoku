@@ -1,17 +1,13 @@
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Represents a square Sudoku instance.
  */
 public final class Sudoku {
 
-    private static final int MINIMUM = 1;
-    private static final int MAXIMUM = 9;
+    private static final int[] VALUES = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     private final int squareSize;
     private final int boardSize;
@@ -35,8 +31,7 @@ public final class Sudoku {
         board = new int[boardSize][boardSize];
         boardFixedPositions = new boolean[boardSize][boardSize];
 
-        fillBoard();
-        fillFixedPositions(fixedQuantity);
+        initializeBoard(fixedQuantity);
     }
 
     private Sudoku(int[][] board, boolean[][] boardFixedPositions) {
@@ -46,27 +41,48 @@ public final class Sudoku {
         this.boardFixedPositions =  boardFixedPositions;
     }
 
+    private void initializeBoard(int fixedQuantity) {
+        fillBoard();
+        markFixedPositions(fixedQuantity);
+    }
+
     private void fillBoard() {
-        for (int i = 0; i < boardSize; i++) {
-            this.board[i] = new Random().ints(boardSize, MINIMUM, MAXIMUM + 1).toArray();
+        for (int squareRowIndex = 0; squareRowIndex < squareSize; squareRowIndex++) {
+            for (int squareColumnIndex = 0; squareColumnIndex < squareSize; squareColumnIndex++) {
+                fillBoardSquare(squareRowIndex * squareSize, squareColumnIndex * squareSize);
+            }
         }
     }
 
-    private void fillFixedPositions(int fixedQuantity) {
-        List<Pair<Integer, Integer>> possiblePositions = new ArrayList<>();
+    private void fillBoardSquare(int squareRowIndex, int squareColumnIndex) {
+        LinkedList<Integer> shuffledValues = new LinkedList<>();
+        for (int value : VALUES) {
+            shuffledValues.add(value);
+        }
+        Collections.shuffle(shuffledValues);
 
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                possiblePositions.add(Pair.of(i, j));
+        for (int x = squareRowIndex; x < squareRowIndex + squareSize; x++) {
+            for (int y = squareColumnIndex; y < squareColumnIndex + squareSize ; y++) {
+                int value = shuffledValues.pop();
+
+                board[x][y] = value;
             }
         }
+    }
 
-        int seed = 42;
-        Collections.shuffle(possiblePositions, new Random(seed));
+    private void markFixedPositions(int fixedQuantity) {
+        int i = 0;
+        while (i < fixedQuantity) {
+            Random random = new Random();
+            Pair<Integer, Integer> randomPosition = Pair.of(random.nextInt(boardSize), random.nextInt(boardSize));
+            int x = randomPosition.getLeft();
+            int y = randomPosition.getRight();
 
-        List<Pair<Integer, Integer>> fixedPositions = possiblePositions.subList(0, fixedQuantity);
+            if (boardFixedPositions[x][y]) continue;
 
-        fixedPositions.forEach(position -> boardFixedPositions[position.getLeft()][position.getRight()] = true);
+            boardFixedPositions[x][y] = true;
+            i++;
+        }
     }
 
     /**
@@ -188,13 +204,9 @@ public final class Sudoku {
 
     public static void main(String[] args) {
         int dim = 3;
-        int fixedQuantity = 9;
+        int fixedQuantity = 17;
         Sudoku sudoku = new Sudoku(dim, fixedQuantity);
         sudoku.show();
-        System.out.println("#Duplicates = " + sudoku.repetitions());
-        Sudoku neighbor = sudoku.randomSwap();
-        neighbor.show();
-        System.out.println("#Duplicates = " + neighbor.repetitions());
     }
 
 }

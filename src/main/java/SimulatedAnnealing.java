@@ -9,33 +9,42 @@ public class SimulatedAnnealing {
         int bestEnergy = currentEnergy;
 
         double temperature = 100000.0;
-        double coolingRate = 0.002;
+        double coolingRate = 0.85;
+        double minimumTemperature = 0.01;
+        int equilibriumIterationsAmount = 20000;
 
         // Loop until system has cooled
-        while (temperature > 1.0) {
-            Sudoku neighbor = current.randomSwap();
-            int neighbourEnergy = neighbor.repetitions();
+        while (temperature > minimumTemperature) {
+            for (int i = 0; i < equilibriumIterationsAmount; i++) {
+                Sudoku neighbor = current.randomSwap();
+                int neighborEnergy = neighbor.repetitions();
 
-            // Decide if we should accept the neighbour
-            if (acceptanceProbability(currentEnergy, neighbourEnergy, temperature) > Math.random()) {
-                current = neighbor;
-                currentEnergy = neighbourEnergy;
+                // Decide if we should accept the neighbour
+                if (shouldAcceptNeighbor(currentEnergy, neighborEnergy, temperature)) {
+                    current = neighbor;
+                    currentEnergy = neighborEnergy;
 
-                // Keep track of the best solution found
-                if (currentEnergy < bestEnergy) {
-                    best = current;
-                    bestEnergy = currentEnergy;
-                    System.out.println("New best sudoku repetitions: " + bestEnergy);
+                    // Keep track of the best solution found
+                    if (currentEnergy < bestEnergy) {
+                        best = current;
+                        bestEnergy = currentEnergy;
+                        System.out.println("New best sudoku repetitions: " + bestEnergy);
+                    }
                 }
             }
 
             // Cool system
-            temperature *= 1 - coolingRate;
+            temperature *= 1.0 - coolingRate;
+            equilibriumIterationsAmount *= 2;
         }
 
         System.out.println("Final Sudoku");
         best.show();
         System.out.println("Final Sudoku #repetitions: " + bestEnergy);
+    }
+
+    private static boolean shouldAcceptNeighbor(int currentEnergy, int neighborEnergy, double temperature) {
+        return acceptanceProbability(currentEnergy, neighborEnergy, temperature) > Math.random();
     }
 
     private static double acceptanceProbability(int currentEnergy, int neighborEnergy, double temperature) {

@@ -143,7 +143,9 @@ public final class Sudoku {
 
         for (int x = boardRowIndex; x < boardRowIndex + squareSize; x++) {
             for (int y = boardColumnIndex; y < boardColumnIndex + squareSize; y++) {
-                squareRepetitions += board[x][y] == target ? 1 : 0;
+                if (x != rowIndex || y != columnIndex) {
+                    squareRepetitions += board[x][y] == target ? 1 : 0;
+                }
             }
         }
 
@@ -184,7 +186,7 @@ public final class Sudoku {
 
         // Copy board data
         int[][] swappedBoard = new int[boardSize][boardSize];
-        boolean fixedBoardPositionsCopy[][] = new boolean[boardSize][boardSize];
+        boolean[][] fixedBoardPositionsCopy = new boolean[boardSize][boardSize];
 
         for (int i = 0; i < boardSize; i++) {
             System.arraycopy(board[i], 0, swappedBoard[i], 0, boardSize);

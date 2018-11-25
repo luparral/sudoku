@@ -2,7 +2,7 @@ public class SimulatedAnnealing {
 
     public static void main(String[] args) {
         // Initialize system
-        Sudoku current = new Sudoku(3, 17);
+        Sudoku current = new Sudoku(5, 30);
         int currentEnergy = current.repetitions();
         System.out.println("Initial sudoku repetitions: " + currentEnergy);
         Sudoku best = current;
@@ -10,8 +10,8 @@ public class SimulatedAnnealing {
 
         double temperature = 100000.0;
         double coolingRate = 0.85;
-        double minimumTemperature = 0.01;
-        int equilibriumIterationsAmount = 20000;
+        double minimumTemperature = 0.1;
+        int equilibriumIterationsAmount = 10000;
 
         // Loop until system has cooled
         while (temperature > minimumTemperature) {

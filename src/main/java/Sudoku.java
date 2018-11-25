@@ -7,8 +7,6 @@ import java.util.*;
  */
 public final class Sudoku {
 
-    private static final int[] VALUES = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9};
-
     private final int squareSize;
     private final int boardSize;
     private final int[][] board;
@@ -56,9 +54,7 @@ public final class Sudoku {
 
     private void fillBoardSquare(int squareRowIndex, int squareColumnIndex) {
         LinkedList<Integer> shuffledValues = new LinkedList<>();
-        for (int value : VALUES) {
-            shuffledValues.add(value);
-        }
+        for (int i = 1; i <= boardSize; i++) shuffledValues.add(i);
         Collections.shuffle(shuffledValues);
 
         for (int x = squareRowIndex; x < squareRowIndex + squareSize; x++) {

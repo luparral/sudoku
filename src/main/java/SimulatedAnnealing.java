@@ -1,8 +1,16 @@
+import sudoku.Sudoku;
+import sudoku.Sudoku.Config;
+import sudoku.Sudoku.NeighborStrategy;
+
 public class SimulatedAnnealing {
 
     public static void main(String[] args) {
+        runSimulatedAnnealing(4, 17, NeighborStrategy.RANDOM_SWAP_SQUARE);
+    }
+
+    private static void runSimulatedAnnealing(int squareSize, int fixedQuantity, NeighborStrategy neighborStrategy) {
         // Initialize system
-        Sudoku current = new Sudoku(5, 30);
+        Sudoku current = Sudoku.of(new Config(squareSize, fixedQuantity));
         int currentEnergy = current.repetitions();
         System.out.println("Initial sudoku repetitions: " + currentEnergy);
         Sudoku best = current;
@@ -11,12 +19,12 @@ public class SimulatedAnnealing {
         double temperature = 100000.0;
         double coolingRate = 0.85;
         double minimumTemperature = 0.1;
-        int equilibriumIterationsAmount = 10000;
+        double equilibriumIterationsAmount = Math.pow(squareSize, 7);
 
         // Loop until system has cooled
         while (temperature > minimumTemperature) {
             for (int i = 0; i < equilibriumIterationsAmount; i++) {
-                Sudoku neighbor = current.randomSwap();
+                Sudoku neighbor = current.neighbor(neighborStrategy);
                 int neighborEnergy = neighbor.repetitions();
 
                 // Decide if we should accept the neighbour
@@ -29,6 +37,11 @@ public class SimulatedAnnealing {
                         best = current;
                         bestEnergy = currentEnergy;
                         System.out.println("New best sudoku repetitions: " + bestEnergy);
+                    }
+
+                    if (bestEnergy == 0) {
+                        temperature = minimumTemperature;
+                        break;
                     }
                 }
             }

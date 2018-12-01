@@ -3,6 +3,12 @@ package sudoku;
 import com.sun.istack.internal.NotNull;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -46,6 +52,7 @@ public final class Sudoku {
     private void initializeBoard(int fixedQuantity) {
         fillBoard();
         markFixedPositions(fixedQuantity);
+        stripNonFixedValues();
     }
 
     private void fillBoard() {
@@ -83,6 +90,49 @@ public final class Sudoku {
             boardFixedPositions[x][y] = true;
             i++;
         }
+    }
+
+    private void stripNonFixedValues() {
+        for (int x = 0; x < boardSize; x++) {
+            for (int y = 0; y < boardSize; y++) {
+                if (!boardFixedPositions[x][y]) board[x][y] = 0;
+            }
+        }
+    }
+
+    // TODO: Document
+    public void populateNonFixed() {
+        for (int squareRowIndex = 0; squareRowIndex < squareSize; squareRowIndex++) {
+            for (int squareColumnIndex = 0; squareColumnIndex < squareSize; squareColumnIndex++) {
+                populateNonFixedInSquare(squareRowIndex * squareSize, squareColumnIndex * squareSize);
+            }
+        }
+    }
+
+    // TODO: Document
+    private void populateNonFixedInSquare(int squareRowIndex, int squareColumnIndex) {
+        LinkedList<Integer> shuffledValues = new LinkedList<>();
+        for (int i = 1; i <= boardSize; i++) shuffledValues.add(i);
+        Collections.shuffle(shuffledValues);
+
+        for (int x = squareRowIndex; x < squareRowIndex + squareSize; x++) {
+            for (int y = squareColumnIndex; y < squareColumnIndex + squareSize; y++) {
+                if (boardFixedPositions[x][y]) shuffledValues.remove((Integer)board[x][y]);
+            }
+        }
+
+        for (int x = squareRowIndex; x < squareRowIndex + squareSize; x++) {
+            for (int y = squareColumnIndex; y < squareColumnIndex + squareSize; y++) {
+                if (!boardFixedPositions[x][y]) board[x][y] = shuffledValues.pop();
+            }
+        }
+    }
+
+    /**
+     * @return the size of a square of this instance. For example, in a 3x3 instance the result would be {@code 3}.
+     */
+    public int getSquareSize() {
+        return squareSize;
     }
 
     /**
@@ -150,20 +200,6 @@ public final class Sudoku {
         }
 
         return squareRepetitions;
-    }
-
-    /**
-     * Prints this {@link Sudoku}'s state to {@link System#out}.
-     */
-    public void show() {
-        for (int row = 0; row < boardSize; row++) {
-            for (int column = 0; column < boardSize; column++) {
-                String positionRepresentation = boardFixedPositions[row][column] ? "X" : "0";
-
-                System.out.print(board[row][column] + "(" + positionRepresentation + ")" + " ");
-            }
-            System.out.println();
-        }
     }
 
     /**
@@ -259,6 +295,26 @@ public final class Sudoku {
         return new Sudoku(neighboardBoard, fixedBoardPositionsCopy);
     }
 
+    // TODO: Write documentation
+    public void dump(@NotNull BufferedWriter writer) throws IOException {
+        for (int lineIndex = 0; lineIndex < boardSize; lineIndex++) {
+            StringBuilder lineBuilder = new StringBuilder();
+            for (int i = 0; i < boardSize; i++) lineBuilder.append(board[lineIndex][i]);
+            writer.append(lineBuilder.toString());
+
+            if (lineIndex < boardSize - 1) writer.newLine();
+        }
+    }
+
+    // TODO: Write documentation
+    public void dump(@NotNull PrintStream printStream) {
+        for (int lineIndex = 0; lineIndex < boardSize; lineIndex++) {
+            StringBuilder lineBuilder = new StringBuilder();
+            for (int i = 0; i < boardSize; i++) lineBuilder.append(board[lineIndex][i]);
+            printStream.println(lineBuilder.toString());
+        }
+    }
+
     public final static class Config {
         public final int squareSize;
         public final int fixedQuantity;
@@ -282,6 +338,44 @@ public final class Sudoku {
 
     public enum NeighborStrategy {
         RANDOM_SWAP_BOARD, RANDOM_SWAP_SQUARE, RANDOM_ADD_ONE
+    }
+
+    /**
+     * Outputs {@link Sudoku} instances to files:
+     * TODO
+     */
+    public static void main(String[] ignored) {
+        Path datasetsPath = Paths.get(System.getProperty("user.dir"), "datasets", "params_fixation");
+        try {
+            Files.createDirectories(datasetsPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        /*
+         * First slot corresponds to square size, second to fixed quantity and third to instance number
+         */
+        String instancePathFormat = "s_%d_%d_%d.txt";
+        float[] fixedQuantityPercentages = new float[]{0.2f, 0.4f};
+
+        for (int squareSize = 3; squareSize <= 11; squareSize++) {
+            for (float fixedQuantityPercentage : fixedQuantityPercentages) {
+                int fixedQuantity = (int) Math.ceil(Math.pow(squareSize, 4) * fixedQuantityPercentage);
+                for (int sudokuNumber = 1; sudokuNumber <= 1000; sudokuNumber++) {
+                    Sudoku instance = Sudoku.of(new Config(squareSize, fixedQuantity));
+                    Path instancePath = datasetsPath.resolve(String.format(instancePathFormat, squareSize, fixedQuantity, sudokuNumber));
+
+                    try (BufferedWriter instanceWriter = Files.newBufferedWriter(Files.createFile(instancePath))) {
+                        instance.dump(instanceWriter);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            }
+        }
+
     }
 
 }

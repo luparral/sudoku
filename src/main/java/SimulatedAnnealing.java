@@ -1,3 +1,4 @@
+import com.sun.istack.internal.NotNull;
 import sudoku.Sudoku;
 import sudoku.Sudoku.Config;
 import sudoku.Sudoku.NeighborStrategy;
@@ -5,23 +6,29 @@ import sudoku.Sudoku.NeighborStrategy;
 public class SimulatedAnnealing {
 
     public static void main(String[] args) {
-        runSimulatedAnnealing(4, 17, NeighborStrategy.RANDOM_SWAP_SQUARE);
+        runSimulatedAnnealing(
+                Sudoku.of(new Config(3, 17)),
+                NeighborStrategy.RANDOM_SWAP_BOARD,
+                10000.0,
+                0.85,
+                0.01);
     }
 
-    private static void runSimulatedAnnealing(int squareSize, int fixedQuantity, NeighborStrategy neighborStrategy) {
+    private static void runSimulatedAnnealing(@NotNull Sudoku initial,
+                                              @NotNull NeighborStrategy neighborStrategy,
+                                              double temperature,
+                                              double coolingRate,
+                                              double minimumTemperature) {
         // Initialize system
-        Sudoku current = Sudoku.of(new Config(squareSize, fixedQuantity));
+        Sudoku current = initial;
+        current.populateNonFixed();
         int currentEnergy = current.repetitions();
         System.out.println("Initial sudoku repetitions: " + currentEnergy);
         Sudoku best = current;
         int bestEnergy = currentEnergy;
 
-        double temperature = 100000.0;
-        double coolingRate = 0.85;
-        double minimumTemperature = 0.1;
-        double equilibriumIterationsAmount = Math.pow(squareSize, 7);
+        double equilibriumIterationsAmount = 3 * Math.pow(current.getSquareSize(), 6);
 
-        // Loop until system has cooled
         while (temperature > minimumTemperature) {
             for (int i = 0; i < equilibriumIterationsAmount; i++) {
                 Sudoku neighbor = current.neighbor(neighborStrategy);
@@ -32,16 +39,10 @@ public class SimulatedAnnealing {
                     current = neighbor;
                     currentEnergy = neighborEnergy;
 
-                    // Keep track of the best solution found
                     if (currentEnergy < bestEnergy) {
                         best = current;
                         bestEnergy = currentEnergy;
                         System.out.println("New best sudoku repetitions: " + bestEnergy);
-                    }
-
-                    if (bestEnergy == 0) {
-                        temperature = minimumTemperature;
-                        break;
                     }
                 }
             }
@@ -51,9 +52,9 @@ public class SimulatedAnnealing {
             equilibriumIterationsAmount *= 2;
         }
 
-        System.out.println("Final Sudoku");
-        best.show();
-        System.out.println("Final Sudoku #repetitions: " + bestEnergy);
+        System.out.println("Best Sudoku");
+        best.dump(System.out);
+        System.out.println("Best Sudoku #repetitions: " + bestEnergy);
     }
 
     private static boolean shouldAcceptNeighbor(int currentEnergy, int neighborEnergy, double temperature) {

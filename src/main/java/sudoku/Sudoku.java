@@ -297,22 +297,14 @@ public final class Sudoku {
 
     // TODO: Write documentation
     public void dump(@NotNull BufferedWriter writer) throws IOException {
-        for (int lineIndex = 0; lineIndex < boardSize; lineIndex++) {
-            StringBuilder lineBuilder = new StringBuilder();
-            for (int i = 0; i < boardSize; i++) lineBuilder.append(board[lineIndex][i]);
-            writer.append(lineBuilder.toString());
+        StringBuilder dumpBuilder = new StringBuilder();
 
-            if (lineIndex < boardSize - 1) writer.newLine();
-        }
-    }
-
-    // TODO: Write documentation
-    public void dump(@NotNull PrintStream printStream) {
         for (int lineIndex = 0; lineIndex < boardSize; lineIndex++) {
-            StringBuilder lineBuilder = new StringBuilder();
-            for (int i = 0; i < boardSize; i++) lineBuilder.append(board[lineIndex][i]);
-            printStream.println(lineBuilder.toString());
+            for (int i = 0; i < boardSize; i++) dumpBuilder.append(board[lineIndex][i]);
+            if (lineIndex < boardSize - 1) dumpBuilder.append("\n");
         }
+
+        writer.append(dumpBuilder);
     }
 
     public final static class Config {

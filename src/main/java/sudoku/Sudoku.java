@@ -22,38 +22,6 @@ public final class Sudoku {
     private final int[][] board;
     private final boolean[][] boardFixedPositions;
 
-    /**
-     * Creates a Sudoku in which takes initialization parameters from {@code config}.
-     *
-     * @param config initial Sudoku configuration
-     */
-    public static Sudoku of(@NotNull Config config) {
-        return new Sudoku(config.squareSize, config.fixedQuantity);
-    }
-
-    // TODO: Comment
-    public static Sudoku of(@NotNull FileConfig fileConfig) {
-        List<int[]> sudokuLines = fileConfig.readSudokuLines();
-
-        int boardSize = sudokuLines.size();
-        int[][] board = new int[boardSize][boardSize];
-        boolean[][] boardFixedPositions = new boolean[boardSize][boardSize];
-
-        int rowIndex = 0;
-        for (int[] line : sudokuLines) {
-            // Copy raw line into board
-            System.arraycopy(line, 0, board[rowIndex], 0, boardSize);
-
-            for (int columnIndex = 0; columnIndex < boardSize; columnIndex++) {
-                boardFixedPositions[rowIndex][columnIndex] = line[columnIndex] > 0;
-            }
-
-            rowIndex++;
-        }
-
-        return new Sudoku(board, boardFixedPositions);
-    }
-
     private Sudoku(int squareSize, int fixedQuantity) {
         if (squareSize < 1) throw new IllegalArgumentException("squareSize cannot be < 1");
         if (fixedQuantity < 0) throw new IllegalArgumentException("fixedQuantity cannot be < 0");
@@ -335,6 +303,38 @@ public final class Sudoku {
         writer.append(dumpBuilder);
     }
 
+    /**
+     * Creates a Sudoku in which takes initialization parameters from {@code config}.
+     *
+     * @param config initial Sudoku configuration
+     */
+    public static Sudoku of(@NotNull Config config) {
+        return new Sudoku(config.squareSize, config.fixedQuantity);
+    }
+
+    // TODO: Comment
+    public static Sudoku of(@NotNull FileConfig fileConfig) {
+        List<int[]> sudokuLines = fileConfig.readSudokuLines();
+
+        int boardSize = sudokuLines.size();
+        int[][] board = new int[boardSize][boardSize];
+        boolean[][] boardFixedPositions = new boolean[boardSize][boardSize];
+
+        int rowIndex = 0;
+        for (int[] line : sudokuLines) {
+            // Copy raw line into board
+            System.arraycopy(line, 0, board[rowIndex], 0, boardSize);
+
+            for (int columnIndex = 0; columnIndex < boardSize; columnIndex++) {
+                boardFixedPositions[rowIndex][columnIndex] = line[columnIndex] > 0;
+            }
+
+            rowIndex++;
+        }
+
+        return new Sudoku(board, boardFixedPositions);
+    }
+
     public final static class Config {
         public final int squareSize;
         public final int fixedQuantity;
@@ -448,12 +448,14 @@ public final class Sudoku {
          * First slot corresponds to square size, second to fixed quantity and third to instance number
          */
         String instancePathFormat = "s_%d_%d_%d.txt";
-        float[] fixedQuantityPercentages = new float[]{0.2f, 0.4f};
+        float[] fixedQuantityPercentages = new float[]{0.2f};
+        int[] squareSizes = new int[]{3, 5};
 
-        for (int squareSize = 3; squareSize <= 11; squareSize++) {
+        for (int squareSize : squareSizes) {
             for (float fixedQuantityPercentage : fixedQuantityPercentages) {
                 int fixedQuantity = (int) Math.ceil(Math.pow(squareSize, 4) * fixedQuantityPercentage);
-                for (int sudokuNumber = 1; sudokuNumber <= 1000; sudokuNumber++) {
+
+                for (int sudokuNumber = 1; sudokuNumber <= 500; sudokuNumber++) {
                     Sudoku instance = Sudoku.of(new Config(squareSize, fixedQuantity));
                     Path instancePath = datasetsPath.resolve(String.format(instancePathFormat, squareSize, fixedQuantity, sudokuNumber));
 

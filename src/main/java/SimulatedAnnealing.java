@@ -1,7 +1,7 @@
 import com.sun.istack.internal.NotNull;
 import sudoku.Sudoku;
-import sudoku.Sudoku.Config;
 import sudoku.Sudoku.NeighborStrategy;
+import sudoku.Sudoku.SingleDigitValueFileConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -14,22 +14,31 @@ public class SimulatedAnnealing {
 
     // TODO: Clean code
     public static void main(String[] args) {
-        SimulatedAnnealingReport report = runSimulatedAnnealing(
-                Sudoku.of(new Config(3, 17)),
-                NeighborStrategy.RANDOM_SWAP_BOARD,
-                10000.0,
-                0.85,
-                0.01);
-
-        Path resultsPath = Paths.get(System.getProperty("user.dir"), "results", "params_fixation");
+        Path userDirectory = Paths.get(System.getProperty("user.dir"));
         try {
-            Files.createDirectories(resultsPath);
+            Files.createDirectories(userDirectory);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
-        try (BufferedWriter output = Files.newBufferedWriter(Files.createFile(resultsPath.resolve("results.txt")))) {
+        SimulatedAnnealingReport report = runSimulatedAnnealing(
+                Sudoku.of(new Sudoku.ValueSeparatorFileConfig(userDirectory.resolve("test_separator.txt"), ' ')),
+                NeighborStrategy.RANDOM_SWAP_SQUARE,
+                10000.0,
+                0.85,
+                0.01);
+
+        Path resultsFilePath = userDirectory.resolve("results.txt");
+        if (Files.notExists(resultsFilePath)) {
+            try {
+                Files.createFile(resultsFilePath);
+            } catch (IOException ignored) {
+                // Do nothing
+            }
+        }
+
+        try (BufferedWriter output = Files.newBufferedWriter(resultsFilePath)) {
             report.dump(output);
         } catch (IOException e) {
             e.printStackTrace();
@@ -48,7 +57,7 @@ public class SimulatedAnnealing {
         int currentEnergy = current.repetitions();
         Sudoku best = current;
         int bestEnergy = currentEnergy;
-        long equilibriumIterationsAmount = 3 * (long) Math.pow(current.getSquareSize(), 6);
+        long equilibriumIterationsAmount = (long) Math.pow(current.getSquareSize(), 7);
 
         report.appendIterationReport(currentEnergy, bestEnergy);
         while (temperature > minimumTemperature) {
@@ -71,7 +80,6 @@ public class SimulatedAnnealing {
 
             // Cool system
             temperature *= 1.0 - coolingRate;
-            equilibriumIterationsAmount *= 2;
         }
 
         return report;
@@ -105,8 +113,8 @@ final class SimulatedAnnealingReport {
     }
 
     void dump(@NotNull BufferedWriter writer) throws IOException {
-        String lineFormat = "%d %d %d %d";
         writer.append("iteration cost bestCost time");
+        String lineFormat = "%d %d %d %d";
 
         for (ReportNode node : iterationReports) {
             writer.newLine();

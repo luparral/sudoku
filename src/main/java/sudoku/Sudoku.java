@@ -5,11 +5,12 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a square Sudoku instance.
@@ -28,6 +29,29 @@ public final class Sudoku {
      */
     public static Sudoku of(@NotNull Config config) {
         return new Sudoku(config.squareSize, config.fixedQuantity);
+    }
+
+    // TODO: Comment
+    public static Sudoku of(@NotNull FileConfig fileConfig) {
+        List<int[]> sudokuLines = fileConfig.readSudokuLines();
+
+        int boardSize = sudokuLines.size();
+        int[][] board = new int[boardSize][boardSize];
+        boolean[][] boardFixedPositions = new boolean[boardSize][boardSize];
+
+        int rowIndex = 0;
+        for (int[] line : sudokuLines) {
+            // Copy raw line into board
+            System.arraycopy(line, 0, board[rowIndex], 0, boardSize);
+
+            for (int columnIndex = 0; columnIndex < boardSize; columnIndex++) {
+                boardFixedPositions[rowIndex][columnIndex] = line[columnIndex] > 0;
+            }
+
+            rowIndex++;
+        }
+
+        return new Sudoku(board, boardFixedPositions);
     }
 
     private Sudoku(int squareSize, int fixedQuantity) {
@@ -300,7 +324,11 @@ public final class Sudoku {
         StringBuilder dumpBuilder = new StringBuilder();
 
         for (int lineIndex = 0; lineIndex < boardSize; lineIndex++) {
-            for (int i = 0; i < boardSize; i++) dumpBuilder.append(board[lineIndex][i]);
+            for (int i = 0; i < boardSize; i++) {
+                dumpBuilder.append(board[lineIndex][i]);
+                if (i < boardSize - 1) dumpBuilder.append(' ');
+            }
+
             if (lineIndex < boardSize - 1) dumpBuilder.append("\n");
         }
 
@@ -325,6 +353,77 @@ public final class Sudoku {
 
             this.squareSize = squareSize;
             this.fixedQuantity = fixedQuantity;
+        }
+    }
+
+    // TODO: Comment
+    public abstract static class FileConfig {
+        protected final Path filePath;
+
+        private FileConfig(@NotNull Path filePath) {
+            this.filePath = filePath;
+        }
+
+        @NotNull
+        abstract List<int[]> readSudokuLines();
+    }
+
+    // TODO: Comment
+    public final static class SingleDigitValueFileConfig extends FileConfig {
+
+        public SingleDigitValueFileConfig(@NotNull Path filePath) {
+            super(filePath);
+        }
+
+        @NotNull
+        public List<int[]> readSudokuLines() {
+            Stream<int[]> sudokuLinesStream;
+
+            try {
+                sudokuLinesStream = Files.readAllLines(filePath).stream()
+                        .filter(s -> !s.trim().isEmpty())
+                        .map(s -> {
+                            int[] line = new int[s.length()];
+                            for (int i = 0; i < s.length(); i++) line[i] = Character.getNumericValue(s.charAt(i));
+                            return line;
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read file " + filePath);
+            }
+
+            return sudokuLinesStream.collect(Collectors.toList());
+        }
+    }
+
+    // TODO: Comment
+    public final static class ValueSeparatorFileConfig extends FileConfig {
+        private final String stringSeparator;
+
+        public ValueSeparatorFileConfig(@NotNull Path filePath, char separator) {
+            super(filePath);
+            stringSeparator = String.valueOf(separator);
+        }
+
+        @NotNull
+        public List<int[]> readSudokuLines() {
+            Stream<int[]> sudokuLinesStream;
+
+            try {
+                sudokuLinesStream = Files.readAllLines(filePath).stream()
+                        .filter(s -> !s.trim().isEmpty())
+                        .map(s -> {
+                            String[] stringValues = s.split(stringSeparator);
+                            int[] line = new int[s.length()];
+                            for (int i = 0; i < stringValues.length; i++) {
+                                line[i] = Integer.valueOf(stringValues[i]);
+                            }
+                            return line;
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read file " + filePath);
+            }
+
+            return sudokuLinesStream.collect(Collectors.toList());
         }
     }
 

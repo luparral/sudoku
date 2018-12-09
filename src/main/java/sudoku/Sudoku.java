@@ -428,7 +428,21 @@ public final class Sudoku {
     }
 
     public enum NeighborStrategy {
-        RANDOM_SWAP_BOARD, RANDOM_SWAP_SQUARE, RANDOM_ADD_ONE
+        RANDOM_SWAP_BOARD, RANDOM_SWAP_SQUARE, RANDOM_ADD_ONE;
+
+        @NotNull
+        public String shorthand() {
+            switch (this) {
+                case RANDOM_SWAP_BOARD:
+                    return "sb";
+                case RANDOM_SWAP_SQUARE:
+                    return "ss";
+                case RANDOM_ADD_ONE:
+                    return "ao";
+            }
+
+            throw new IllegalStateException("Invalid NeighborStrategy instance");
+        }
     }
 
     /**
@@ -449,13 +463,13 @@ public final class Sudoku {
          */
         String instancePathFormat = "s_%d_%d_%d.txt";
         float[] fixedQuantityPercentages = new float[]{0.2f};
-        int[] squareSizes = new int[]{3, 5};
+        int[] squareSizes = new int[]{3, 4, 5};
 
         for (int squareSize : squareSizes) {
             for (float fixedQuantityPercentage : fixedQuantityPercentages) {
                 int fixedQuantity = (int) Math.ceil(Math.pow(squareSize, 4) * fixedQuantityPercentage);
 
-                for (int sudokuNumber = 1; sudokuNumber <= 500; sudokuNumber++) {
+                for (int sudokuNumber = 1; sudokuNumber <= 150; sudokuNumber++) {
                     Sudoku instance = Sudoku.of(new Config(squareSize, fixedQuantity));
                     Path instancePath = datasetsPath.resolve(String.format(instancePathFormat, squareSize, fixedQuantity, sudokuNumber));
 

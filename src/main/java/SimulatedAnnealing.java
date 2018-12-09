@@ -6,6 +6,7 @@ import sudoku.Sudoku.ValueSeparatorFileConfig;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.LinkedList;
@@ -16,21 +17,31 @@ public class SimulatedAnnealing {
     private static final String USER_DIRECTORY_PATH = System.getProperty("user.dir");
 
     public static void main(String[] args) {
-        runParametersFixationTrials(NeighborStrategy.RANDOM_SWAP_SQUARE, 10000.0, 0.01, 0.85);
+        runParametersFixationTrials(5, NeighborStrategy.RANDOM_SWAP_SQUARE, 10000.0, 0.01, 0.85);
     }
 
-    public static void runParametersFixationTrials(@NotNull NeighborStrategy strategy,
+    public static void runParametersFixationTrials(int squareSize,
+                                                   @NotNull NeighborStrategy strategy,
                                                    double initialTemperature,
                                                    double minimumTemperature,
                                                    double coolingRate) {
         Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "params_fixation");
-        Path resultsFilePath = Paths.get(USER_DIRECTORY_PATH, "results", "params_fixation", "results_params_fixation.txt");
+        try {
+            Files.createDirectories(datasetDirectoryPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
+        String resultsFileName = String.format("r_%d_%s_%.0f_%.2f_%.2f.txt",
+                squareSize, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);
+        Path resultsFilePath = Paths.get(USER_DIRECTORY_PATH, "results", "params_fixation", resultsFileName);
+
+        boolean writeHeader = true;
         try (BufferedWriter output = Files.newBufferedWriter(resultsFilePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            FilenameFilter filenameFilter = (dir, name) -> name.matches(String.format("s_%d_.*\\.txt", squareSize));
 
-            for (File file : Objects.requireNonNull(datasetDirectoryPath.toFile().listFiles())) {
-                if (!file.getName().endsWith(".txt")) continue;
-
+            for (File file : Objects.requireNonNull(datasetDirectoryPath.toFile().listFiles(filenameFilter))) {
                 /*
                  * Format is ["s", Square Size, Fixed Quantity, Instance Number]
                  */
@@ -45,7 +56,8 @@ public class SimulatedAnnealing {
                         minimumTemperature,
                         coolingRate);
 
-                report.dump(output, String.valueOf(instanceNumber));
+                report.dump(output, String.valueOf(instanceNumber), writeHeader);
+                writeHeader = false;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -57,13 +69,7 @@ public class SimulatedAnnealing {
                                                                   double temperature,
                                                                   double minimumTemperature,
                                                                   double coolingRate) {
-        SimulatedAnnealingReport report = new SimulatedAnnealingReport(
-                initial.getSquareSize(),
-                neighborStrategy,
-                temperature,
-                minimumTemperature,
-                coolingRate);
-
+        SimulatedAnnealingReport report = new SimulatedAnnealingReport();
         Sudoku current = initial;
         current.populateNonFixed();
         int currentEnergy = current.repetitions();
@@ -115,23 +121,6 @@ final class SimulatedAnnealingReport {
 
     private final LinkedList<ReportNode> iterationReports = new LinkedList<>();
     private final long initialTime = System.currentTimeMillis();
-    private final int squareSize;
-    private final NeighborStrategy strategy;
-    private final double initialTemperature;
-    private final double minimumTemperature;
-    private final double coolingRate;
-
-    SimulatedAnnealingReport(int squareSize,
-                             @NotNull NeighborStrategy strategy,
-                             double initialTemperature,
-                             double minimumTemperature,
-                             double coolingRate) {
-        this.squareSize = squareSize;
-        this.strategy = strategy;
-        this.initialTemperature = initialTemperature;
-        this.minimumTemperature = minimumTemperature;
-        this.coolingRate = coolingRate;
-    }
 
     void appendIterationReport(int cost, int bestCost, double temperature) {
         long currentTime = System.currentTimeMillis();
@@ -140,24 +129,23 @@ final class SimulatedAnnealingReport {
     }
 
     void dump(@NotNull BufferedWriter writer,
-              @NotNull String id) throws IOException {
-        writer.append("id squareSize strategy iteration cost bestCost time currentTemperature initialTemperature minimumTemperature coolingRate");
-        String lineFormat = "%s %d %s %d %d %d %d %.0f %.0f %.2f %.2f";
+              @NotNull String id,
+              boolean writeHeader) throws IOException {
+        if (writeHeader) {
+            writer.append("id iteration cost bestCost time currentTemperature");
+        }
+
+        String lineFormat = "%s %d %d %d %d %.0f";
 
         for (ReportNode node : iterationReports) {
             writer.newLine();
             writer.append(String.format(lineFormat,
                     id,
-                    squareSize,
-                    strategy.toString(),
                     node.iteration,
                     node.cost,
                     node.bestCost,
                     node.time,
-                    node.temperature,
-                    initialTemperature,
-                    minimumTemperature,
-                    coolingRate));
+                    node.temperature));
         }
     }
 

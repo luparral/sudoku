@@ -1,7 +1,6 @@
 import com.sun.istack.internal.NotNull;
 import sudoku.Sudoku;
 import sudoku.Sudoku.NeighborStrategy;
-import sudoku.Sudoku.SingleDigitValueFileConfig;
 import sudoku.Sudoku.ValueSeparatorFileConfig;
 
 import java.io.BufferedWriter;
@@ -17,7 +16,96 @@ public class SimulatedAnnealing {
     private static final String USER_DIRECTORY_PATH = System.getProperty("user.dir");
 
     public static void main(String[] args) {
-        runParametersFixationTrials(5, NeighborStrategy.RANDOM_SWAP_SQUARE, 10000.0, 0.01, 0.85);
+        runPerDifficultyTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 10000.0, 0.01, 0.85, Difficulty.EASY);
+    }
+
+    // TODO: Allow difficulty setting
+    public static void runKaggleTrials(int squareSize,
+                                       @NotNull NeighborStrategy strategy,
+                                       double initialTemperature,
+                                       double minimumTemperature,
+                                       double coolingRate) {
+        Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "kaggle");
+        try {
+            Files.createDirectories(datasetDirectoryPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        String resultsFileName = String.format("r_%d_%s_%.0f_%.2f_%.2f.txt",
+                squareSize, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);
+        Path resultsFilePath = Paths.get(USER_DIRECTORY_PATH, "results", "kaggle", resultsFileName);
+
+        boolean writeHeader = true;
+        try (BufferedWriter output = Files.newBufferedWriter(resultsFilePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            FilenameFilter filenameFilter = (dir, name) -> name.matches(String.format("s_%d.*\\.txt", squareSize));
+
+            for (File file : Objects.requireNonNull(datasetDirectoryPath.toFile().listFiles(filenameFilter))) {
+                /*
+                 * Format is ["s", Square Size, Difficulty, Instance Number]
+                 */
+                String[] nameSplit = file.getName().replaceAll(".txt", "").split("_");
+                String instanceNumber = nameSplit[3];
+
+                SimulatedAnnealingReport report = runSimulatedAnnealing(
+                        Sudoku.of(new ValueSeparatorFileConfig(file.toPath(), ' ')),
+                        strategy,
+                        initialTemperature,
+                        minimumTemperature,
+                        coolingRate);
+
+                report.dump(output, String.valueOf(instanceNumber), writeHeader);
+                writeHeader = false;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void runPerDifficultyTrials(int squareSize,
+                                              @NotNull NeighborStrategy strategy,
+                                              double initialTemperature,
+                                              double minimumTemperature,
+                                              double coolingRate,
+                                              @NotNull Difficulty difficulty) {
+        String difficultyName = difficulty.name().toLowerCase();
+        Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "difficulty");
+        try {
+            Files.createDirectories(datasetDirectoryPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        String resultsFileName = String.format("r_%d_%s_%s_%.0f_%.2f_%.2f.txt",
+                squareSize, difficultyName, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);
+        Path resultsFilePath = Paths.get(USER_DIRECTORY_PATH, "results", "difficulty", resultsFileName);
+
+        boolean writeHeader = true;
+        try (BufferedWriter output = Files.newBufferedWriter(resultsFilePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            FilenameFilter filenameFilter = (dir, name) -> name.matches(String.format("s_%d_%s.*\\.txt", squareSize, difficultyName));
+
+            for (File file : Objects.requireNonNull(datasetDirectoryPath.toFile().listFiles(filenameFilter))) {
+                /*
+                 * Format is ["s", Square Size, Difficulty, Instance Number]
+                 */
+                String[] nameSplit = file.getName().replaceAll(".txt", "").split("_");
+                String instanceNumber = nameSplit[3];
+
+                SimulatedAnnealingReport report = runSimulatedAnnealing(
+                        Sudoku.of(new ValueSeparatorFileConfig(file.toPath(), ' ')),
+                        strategy,
+                        initialTemperature,
+                        minimumTemperature,
+                        coolingRate);
+
+                report.dump(output, String.valueOf(instanceNumber), writeHeader);
+                writeHeader = false;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void runParametersFixationTrials(int squareSize,
@@ -48,7 +136,6 @@ public class SimulatedAnnealing {
                 String[] nameSplit = file.getName().replaceAll(".txt", "").split("_");
                 String instanceNumber = nameSplit[3];
 
-                System.out.println("Running Simulated Annealing with " + file.getName());
                 SimulatedAnnealingReport report = runSimulatedAnnealing(
                         Sudoku.of(new ValueSeparatorFileConfig(file.toPath(), ' ')),
                         strategy,
@@ -112,6 +199,10 @@ public class SimulatedAnnealing {
         }
         // If the new solution is worse, calculate an acceptance probability
         return Math.exp((currentEnergy - neighborEnergy) / temperature);
+    }
+
+    private enum Difficulty {
+        EASY, MEDIUM, HARD, GENIUS
     }
     
 }

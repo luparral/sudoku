@@ -15,32 +15,34 @@ public class SimulatedAnnealing {
 
     private static final String USER_DIRECTORY_PATH = System.getProperty("user.dir");
 
+    private static final double INITIAL_TEMPERATURE = 1000.0;
+    private static final double COOLING_RATE = 0.9;
+    private static final double BEST_MINIMUM_TEMPERATURE = 0.01;
+    private static final NeighborStrategy BEST_NEIGHBOR_STRATEGY = NeighborStrategy.RANDOM_SWAP_SQUARE;
+
     public static void main(String[] args) {
-        runParametersFixationTests();
+        runKaggleTests();
+    }
+
+    private static void runKaggleTests() {
+        runKaggleTrials(BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE);
     }
 
     private static void runParametersFixationTests() {
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, 1000.0, 0.1, 0.9);
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 1000.0, 0.1, 0.9);
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, 1000.0, 0.1, 0.9);
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, 1000.0, 0.01, 0.9);
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 1000.0, 0.01, 0.9);
-        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, 1000.0, 0.01, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, INITIAL_TEMPERATURE, 0.1, COOLING_RATE);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, INITIAL_TEMPERATURE, 0.1, COOLING_RATE);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, INITIAL_TEMPERATURE, 0.1, COOLING_RATE);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
     }
 
-    // TODO: Allow difficulty setting
-    public static void runKaggleTrials(int squareSize,
-                                       @NotNull NeighborStrategy strategy,
+    public static void runKaggleTrials(@NotNull NeighborStrategy strategy,
                                        double initialTemperature,
                                        double minimumTemperature,
                                        double coolingRate) {
+        int squareSize = 3;
         Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "kaggle");
-        try {
-            Files.createDirectories(datasetDirectoryPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
 
         String resultsFileName = String.format("r_%d_%s_%.0f_%.2f_%.2f.txt",
                 squareSize, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);
@@ -52,10 +54,10 @@ public class SimulatedAnnealing {
 
             for (File file : Objects.requireNonNull(datasetDirectoryPath.toFile().listFiles(filenameFilter))) {
                 /*
-                 * Format is ["s", Square Size, Difficulty, Instance Number]
+                 * Format is ["s", Square Size, Instance Number]
                  */
                 String[] nameSplit = file.getName().replaceAll(".txt", "").split("_");
-                String instanceNumber = nameSplit[3];
+                String instanceNumber = nameSplit[2];
 
                 SimulatedAnnealingReport report = runSimulatedAnnealing(
                         Sudoku.of(new ValueSeparatorFileConfig(file.toPath(), ' ')),
@@ -80,12 +82,6 @@ public class SimulatedAnnealing {
                                               @NotNull Difficulty difficulty) {
         String difficultyName = difficulty.name().toLowerCase();
         Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "difficulty");
-        try {
-            Files.createDirectories(datasetDirectoryPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
 
         String resultsFileName = String.format("r_%d_%s_%s_%.0f_%.2f_%.2f.txt",
                 squareSize, difficultyName, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);
@@ -123,12 +119,6 @@ public class SimulatedAnnealing {
                                                    double minimumTemperature,
                                                    double coolingRate) {
         Path datasetDirectoryPath = Paths.get(USER_DIRECTORY_PATH, "datasets", "params_fixation");
-        try {
-            Files.createDirectories(datasetDirectoryPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
 
         String resultsFileName = String.format("r_%d_%s_%.0f_%.2f_%.2f.txt",
                 squareSize, strategy.shorthand(), initialTemperature, minimumTemperature, coolingRate);

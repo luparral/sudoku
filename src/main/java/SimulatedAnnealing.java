@@ -16,7 +16,16 @@ public class SimulatedAnnealing {
     private static final String USER_DIRECTORY_PATH = System.getProperty("user.dir");
 
     public static void main(String[] args) {
-        runPerDifficultyTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 10000.0, 0.01, 0.85, Difficulty.EASY);
+        runParametersFixationTests();
+    }
+
+    private static void runParametersFixationTests() {
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, 1000.0, 0.1, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 1000.0, 0.1, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, 1000.0, 0.1, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, 1000.0, 0.01, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, 1000.0, 0.01, 0.9);
+        runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, 1000.0, 0.01, 0.9);
     }
 
     // TODO: Allow difficulty setting
@@ -226,7 +235,7 @@ final class SimulatedAnnealingReport {
             writer.append("id iteration cost bestCost time currentTemperature");
         }
 
-        String lineFormat = "%s %d %d %d %d %.0f";
+        String lineFormat = "%s %d %d %d %d %.2f";
 
         for (ReportNode node : iterationReports) {
             writer.newLine();

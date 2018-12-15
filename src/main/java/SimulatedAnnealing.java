@@ -21,11 +21,7 @@ public class SimulatedAnnealing {
     private static final NeighborStrategy BEST_NEIGHBOR_STRATEGY = NeighborStrategy.RANDOM_SWAP_SQUARE;
 
     public static void main(String[] args) {
-        runKaggleTests();
-    }
-
-    private static void runKaggleTests() {
-        runKaggleTrials(BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE);
+        runPerDifficultyTests();
     }
 
     private static void runParametersFixationTests() {
@@ -35,6 +31,19 @@ public class SimulatedAnnealing {
         runParametersFixationTrials(4, NeighborStrategy.RANDOM_ADD_ONE, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
         runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_SQUARE, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
         runParametersFixationTrials(4, NeighborStrategy.RANDOM_SWAP_BOARD, INITIAL_TEMPERATURE, 0.01, COOLING_RATE);
+    }
+
+    private static void runKaggleTests() {
+        runKaggleTrials(BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE);
+    }
+
+    private static void runPerDifficultyTests() {
+        runPerDifficultyTrials(4, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.MEDIUM);
+        runPerDifficultyTrials(4, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.HARD);
+        runPerDifficultyTrials(4, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.GENIUS);
+        runPerDifficultyTrials(5, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.MEDIUM);
+        runPerDifficultyTrials(5, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.HARD);
+        runPerDifficultyTrials(5, BEST_NEIGHBOR_STRATEGY, INITIAL_TEMPERATURE, BEST_MINIMUM_TEMPERATURE, COOLING_RATE, Difficulty.GENIUS);
     }
 
     public static void runKaggleTrials(@NotNull NeighborStrategy strategy,
@@ -201,7 +210,7 @@ public class SimulatedAnnealing {
     }
 
     private enum Difficulty {
-        EASY, MEDIUM, HARD, GENIUS
+        MEDIUM, HARD, GENIUS
     }
     
 }
